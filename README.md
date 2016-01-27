@@ -1,5 +1,12 @@
 Exploring elm by building a FAQ search box.
 
+Usage:
+
+    elm reactor
+    # visit http://localhost:8000/HelpSearch.elm
+    # change the contents of the search box
+
+
 ## License
 
 Copyright (c) 2016 [Joakim Kolsjö](https://twitter.com/joakimk)
