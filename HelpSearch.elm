@@ -5,16 +5,30 @@ import Signal exposing (Address)
 import StartApp.Simple as StartApp
 import ElmTextSearch
 
+-- todo
+-- render within custom index.html
+-- styling
+-- try with real json data for FAQ
+
 main =
-  StartApp.start { model = initialModel, view = view, update = update }
+  StartApp.start { model = initialModelWithSearchResults, view = view, update = update }
+
+initialModelWithSearchResults =
+  let
+    results = (search initialModel initialModel.query)
+  in
+    { initialModel | results = results }
+
 
 ---- VIEW ----
+
 view address model =
   div
     [ ]
     [ input [ class "help-search__box"
             , type' "search"
             , placeholder "Skriv här: nyckelord, begrepp, fråga…"
+            , value model.query
             , onInput address Search
             ] []
     , div [] (List.map renderResult model.results)
@@ -32,6 +46,7 @@ renderResult helpItem =
   []
   [ text helpItem.question ]
 
+
 ---- UPDATE ----
 
 type Action
@@ -44,7 +59,7 @@ update action model =
     NoOp -> model
 
     Search text ->
-      { model | results = (search model text) }
+      { model | results = (search model text), query = text }
 
 search model text =
   searchIds model text
@@ -56,13 +71,14 @@ searchIds model text =
     |> Result.map snd
   in
    case result of
-     Ok v -> List.map fst v
-     Result.Err e -> [ e ] -- handle this propertly
+     Ok hits -> List.map fst hits
+     Result.Err _ -> []
 
 findHelpItem : Model -> String -> Maybe HelpItem
 findHelpItem model foundId =
   List.filter (\helpItem -> toString(helpItem.id) == foundId) model.helpItems
   |> List.head
+
 
 ---- MODEL ----
 
@@ -73,11 +89,13 @@ initialModel =
     , { id = 2, question = "Question2", answer = "Answer2" }
     ]
   , results = []
+  , query = "Q"
   }
 
 type alias Model =
   { helpItems : List HelpItem
   , results : List HelpItem
+  , query : String
   }
 
 
