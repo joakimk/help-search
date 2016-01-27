@@ -9,7 +9,6 @@ type alias Model =
   , query : String
   }
 
-
 type alias HelpItem =
   { id : Int
   , question : String
