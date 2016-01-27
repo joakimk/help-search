@@ -17,8 +17,7 @@ view address model =
             , placeholder "Skriv här: nyckelord, begrepp, fråga…"
             , onInput address Search
             ] []
-    , div [] (List.map renderResult model.helpItems)
-    , div [] [ text model.results ]
+    , div [] (List.map renderResult model.results)
     ]
 
 -- TODO: clarify what "f" and "v" is, etc.
@@ -44,14 +43,26 @@ update action model =
   case action of
     NoOp -> model
 
-    -- TODO: implement
     Search text ->
       { model | results = (search model text) }
 
 search model text =
-  searchAndReturnIndex model "Q"
-  |> Result.map snd
-  |> toString
+  searchIds model text
+  |> List.filterMap (findHelpItem model)
+
+searchIds model text =
+  let
+    result = searchAndReturnIndex model text
+    |> Result.map snd
+  in
+   case result of
+     Ok v -> List.map fst v
+     Result.Err e -> [ e ] -- handle this propertly
+
+findHelpItem : Model -> String -> Maybe HelpItem
+findHelpItem model foundId =
+  List.filter (\helpItem -> toString(helpItem.id) == foundId) model.helpItems
+  |> List.head
 
 ---- MODEL ----
 
@@ -61,12 +72,12 @@ initialModel =
     [ { id = 1, question = "Question1", answer = "Answer1" }
     , { id = 2, question = "Question2", answer = "Answer2" }
     ]
-  , results = ""
+  , results = []
   }
 
 type alias Model =
   { helpItems : List HelpItem
-  , results : String
+  , results : List HelpItem
   }
 
 
@@ -81,15 +92,14 @@ type alias HelpItem =
 
 searchAndReturnIndex model text =
   buildSearchIndex(model)
-    `Result.andThen`
-    (ElmTextSearch.search text)
+  |> ElmTextSearch.search text
 
 buildSearchIndex model =
-  ElmTextSearch.add { id = 3, question = "Question3", answer = "Answer3" } createNewIndexExample
---List.foldl (\helpItem index ElmTextSearch.add(helpItem index)) createNewIndexExample model.helpItems
+  (ElmTextSearch.addDocs model.helpItems createNewIndex)
+  |> fst
 
-createNewIndexExample : ElmTextSearch.Index HelpItem
-createNewIndexExample =
+createNewIndex : ElmTextSearch.Index HelpItem
+createNewIndex =
   ElmTextSearch.new
     { ref = (\helpItem -> helpItem.id |> toString)
     , fields =
