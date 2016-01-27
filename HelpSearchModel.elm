@@ -25,7 +25,7 @@ search model text =
 
 searchIds model text =
   let
-    result = searchAndReturnIndex model text
+    result = runHelpItemSearch model text
     |> Result.map snd
   in
    case result of
@@ -37,16 +37,16 @@ findHelpItem model foundId =
   List.filter (\helpItem -> toString(helpItem.id) == foundId) model.helpItems
   |> List.head
 
-searchAndReturnIndex model text =
-  buildSearchIndex(model)
+runHelpItemSearch model text =
+  buildHelpItemIndex(model)
   |> ElmTextSearch.search text
 
-buildSearchIndex model =
-  (ElmTextSearch.addDocs model.helpItems createNewIndex)
+buildHelpItemIndex model =
+  (ElmTextSearch.addDocs model.helpItems buildEmptyIndex)
   |> fst
 
-createNewIndex : ElmTextSearch.Index HelpItem
-createNewIndex =
+buildEmptyIndex : ElmTextSearch.Index HelpItem
+buildEmptyIndex =
   ElmTextSearch.new
     { ref = (\helpItem -> helpItem.id |> toString)
     , fields =
