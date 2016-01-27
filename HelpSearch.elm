@@ -3,7 +3,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Signal exposing (Address)
 import StartApp.Simple as StartApp
-import ElmTextSearch
+
+import HelpSearchModel exposing (Model, HelpItem, search)
 
 -- todo
 -- render within custom index.html
@@ -12,12 +13,6 @@ import ElmTextSearch
 
 main =
   StartApp.start { model = initialModelWithSearchResults, view = view, update = update }
-
-initialModelWithSearchResults =
-  let
-    results = (search initialModel initialModel.query)
-  in
-    { initialModel | results = results }
 
 
 ---- VIEW ----
@@ -61,26 +56,14 @@ update action model =
     Search text ->
       { model | results = (search model text), query = text }
 
-search model text =
-  searchIds model text
-  |> List.filterMap (findHelpItem model)
-
-searchIds model text =
-  let
-    result = searchAndReturnIndex model text
-    |> Result.map snd
-  in
-   case result of
-     Ok hits -> List.map fst hits
-     Result.Err _ -> []
-
-findHelpItem : Model -> String -> Maybe HelpItem
-findHelpItem model foundId =
-  List.filter (\helpItem -> toString(helpItem.id) == foundId) model.helpItems
-  |> List.head
-
 
 ---- MODEL ----
+
+initialModelWithSearchResults =
+  let
+    results = (search initialModel initialModel.query)
+  in
+    { initialModel | results = results }
 
 initialModel : Model
 initialModel =
@@ -91,37 +74,3 @@ initialModel =
   , results = []
   , query = "Q"
   }
-
-type alias Model =
-  { helpItems : List HelpItem
-  , results : List HelpItem
-  , query : String
-  }
-
-
-type alias HelpItem =
-  { id : Int
-  , question : String
-  , answer : String
-  }
-
-
----- Full text search indexing ----
-
-searchAndReturnIndex model text =
-  buildSearchIndex(model)
-  |> ElmTextSearch.search text
-
-buildSearchIndex model =
-  (ElmTextSearch.addDocs model.helpItems createNewIndex)
-  |> fst
-
-createNewIndex : ElmTextSearch.Index HelpItem
-createNewIndex =
-  ElmTextSearch.new
-    { ref = (\helpItem -> helpItem.id |> toString)
-    , fields =
-        [ ( .question, 1.0 )
-        , ( .answer, 1.0 )
-        ]
-    }
