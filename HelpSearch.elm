@@ -68,9 +68,9 @@ initialModelWithSearchResults =
 initialModel : Model
 initialModel =
   { helpItems =
-    [ { id = 1, question = "Question1", answer = "Answer1" }
-    , { id = 2, question = "Question2", answer = "Answer2" }
+    [ { id = 1, question = "What is your favorite color?", answer = "Dunno" }
+    , { id = 2, question = "What is a Elm?", answer = "A type of tree" }
     ]
   , results = []
-  , query = "Q"
+  , query = "color"
   }
